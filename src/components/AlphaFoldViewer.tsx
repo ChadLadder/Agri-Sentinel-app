@@ -1,7 +1,7 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { AlphaFoldProtein } from '../types';
 import * as THREE from 'three';
-import { Dna, Activity, ExternalLink, Box } from 'lucide-react';
+import { Dna, ExternalLink, Play, Pause, Eye } from 'lucide-react';
 
 interface AlphaFoldViewerProps {
   protein: AlphaFoldProtein;
@@ -9,13 +9,18 @@ interface AlphaFoldViewerProps {
 
 export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => {
   const mountRef = useRef<HTMLDivElement>(null);
+  const [isRotating, setIsRotating] = useState<boolean>(true);
+  const [wireframeMode, setWireframeMode] = useState<boolean>(false);
+  const [selectedResidue, setSelectedResidue] = useState<string | null>(null);
+
+  const groupRef = useRef<THREE.Group | null>(null);
+  const materialsRef = useRef<THREE.MeshStandardMaterial[]>([]);
 
   useEffect(() => {
     if (!mountRef.current) return;
 
-    // Set up 3D Canvas Scene for Molecular Protein Structure
     const width = mountRef.current.clientWidth;
-    const height = 240;
+    const height = 260;
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color('#070a12');
@@ -30,43 +35,49 @@ export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => 
     mountRef.current.innerHTML = '';
     mountRef.current.appendChild(renderer.domElement);
 
-    // Lights
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.7);
+    // Lighting setup
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0x06b6d4, 1.2);
-    dirLight.position.set(10, 10, 10);
-    scene.add(dirLight);
+    const dirLight1 = new THREE.DirectionalLight(0x06b6d4, 1.4);
+    dirLight1.position.set(12, 12, 12);
+    scene.add(dirLight1);
 
-    const pointLight = new THREE.PointLight(0x10b981, 1.5);
-    pointLight.position.set(-10, -10, -10);
+    const dirLight2 = new THREE.DirectionalLight(0x10b981, 1.2);
+    dirLight2.position.set(-12, -12, -12);
+    scene.add(dirLight2);
+
+    const pointLight = new THREE.PointLight(0xf59e0b, 1.8);
+    pointLight.position.set(0, 0, 10);
     scene.add(pointLight);
 
-    // Create Procedural AlphaFold Protein Molecular Cluster
+    // Create Procedural AlphaFold Molecular Cluster Group
     const proteinGroup = new THREE.Group();
+    groupRef.current = proteinGroup;
+    materialsRef.current = [];
 
-    // Secondary Alpha-Helix & Beta-Sheet Backbone Spheres
-    const atomCount = 45;
+    const atomCount = 50;
     const atoms: THREE.Mesh[] = [];
 
     const helixColors = [0x10b981, 0x06b6d4, 0x8b5cf6, 0x38bdf8];
 
     for (let i = 0; i < atomCount; i++) {
-      const radius = 0.5 + Math.random() * 0.4;
+      const radius = 0.55 + Math.random() * 0.35;
       const geometry = new THREE.SphereGeometry(radius, 16, 16);
 
-      // Highlight active binding site residues in Gold/Amber
-      const isBindingSite = i % 7 === 0;
+      const isBindingSite = i % 6 === 0;
       const material = new THREE.MeshStandardMaterial({
         color: isBindingSite ? 0xf59e0b : helixColors[i % helixColors.length],
-        roughness: 0.3,
-        metalness: 0.4,
-        wireframe: i % 9 === 0,
+        roughness: 0.25,
+        metalness: 0.45,
+        wireframe: wireframeMode,
       });
 
+      materialsRef.current.push(material);
+
       const mesh = new THREE.Mesh(geometry, material);
-      const angle = i * 0.35;
-      const r = 4 + Math.sin(i * 0.5) * 2;
+      const angle = i * 0.38;
+      const r = 4.5 + Math.sin(i * 0.55) * 2.2;
       mesh.position.set(
         Math.cos(angle) * r,
         (i - atomCount / 2) * 0.35,
@@ -89,19 +100,21 @@ export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => 
     }
 
     lineGeo.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
-    const lineMat = new THREE.LineBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.6 });
+    const lineMat = new THREE.LineBasicMaterial({ color: 0x475569, transparent: true, opacity: 0.7 });
     const lines = new THREE.LineSegments(lineGeo, lineMat);
     proteinGroup.add(lines);
 
     scene.add(proteinGroup);
 
-    // Animation Loop
+    // Animation loop
     let animationFrameId: number;
 
     const animate = () => {
       animationFrameId = requestAnimationFrame(animate);
-      proteinGroup.rotation.y += 0.008;
-      proteinGroup.rotation.x += 0.004;
+      if (isRotating && groupRef.current) {
+        groupRef.current.rotation.y += 0.007;
+        groupRef.current.rotation.x += 0.003;
+      }
       renderer.render(scene, camera);
     };
 
@@ -122,20 +135,22 @@ export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => 
       window.removeEventListener('resize', handleResize);
       renderer.dispose();
     };
-  }, [protein]);
+  }, [protein, isRotating, wireframeMode]);
 
   return (
-    <div className="glass-panel p-5 my-6">
+    <div className="glass-panel p-5 my-6 border-purple-500/20 shadow-2xl">
       <div className="flex items-center justify-between mb-4 border-b border-slate-800 pb-3">
-        <div className="flex items-center space-x-2">
-          <Dna className="w-5 h-5 text-purple-400" />
+        <div className="flex items-center space-x-3">
+          <div className="p-2.5 rounded-xl bg-purple-950/60 border border-purple-500/30 text-purple-400">
+            <Dna className="w-5 h-5" />
+          </div>
           <div>
             <h3 className="text-sm font-bold text-slate-100 flex items-center space-x-2">
               <span>AlphaFold 3D Pathogen Protein Target Visualizer</span>
               <span className="px-2 py-0.5 text-[10px] badge-purple">UniProt PDB</span>
             </h3>
             <p className="text-xs text-slate-400">
-              Pathogen Protein Structure: {protein.proteinName} ({protein.organism})
+              Pathogen Target Enzyme: {protein.proteinName} ({protein.organism})
             </p>
           </div>
         </div>
@@ -152,9 +167,32 @@ export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => 
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        {/* 3D WebGL Canvas Rendering Container */}
+        {/* 3D WebGL Canvas Rendering Container & Controls */}
         <div className="lg:col-span-2 relative rounded-xl overflow-hidden border border-slate-800 bg-slate-950">
-          <div ref={mountRef} className="w-full h-[240px]" />
+          <div ref={mountRef} className="w-full h-[260px]" />
+
+          {/* Interactive 3D Control Buttons */}
+          <div className="absolute top-3 right-3 flex items-center space-x-2">
+            <button
+              type="button"
+              onClick={() => setIsRotating(!isRotating)}
+              className="p-1.5 rounded-lg bg-slate-900/80 backdrop-blur border border-slate-700 text-slate-300 hover:text-white transition-all text-xs flex items-center space-x-1"
+              title="Toggle Auto Rotation"
+            >
+              {isRotating ? <Pause className="w-3.5 h-3.5 text-cyan-400" /> : <Play className="w-3.5 h-3.5 text-emerald-400" />}
+            </button>
+
+            <button
+              type="button"
+              onClick={() => setWireframeMode(!wireframeMode)}
+              className={`px-2 py-1 rounded-lg bg-slate-900/80 backdrop-blur border border-slate-700 transition-all text-[11px] font-mono-tech ${
+                wireframeMode ? 'text-amber-400 border-amber-500/50' : 'text-slate-400'
+              }`}
+            >
+              Wireframe
+            </button>
+          </div>
+
           <div className="absolute bottom-2 left-2 px-2.5 py-1 rounded bg-slate-900/80 backdrop-blur border border-slate-800 text-[10px] font-mono-tech text-amber-400 flex items-center space-x-1.5">
             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping"></span>
             <span>Gold Spheres = Active Binding Sites</span>
@@ -171,14 +209,19 @@ export const AlphaFoldViewer: React.FC<AlphaFoldViewerProps> = ({ protein }) => 
 
           <div className="p-3 rounded-xl bg-slate-900/80 border border-slate-800">
             <span className="text-slate-400 font-medium block mb-1">Target Active Binding Residues:</span>
-            <div className="flex flex-wrap gap-1">
+            <div className="flex flex-wrap gap-1.5">
               {protein.bindingSiteResidues.map((res) => (
-                <span
+                <button
                   key={res}
-                  className="px-2 py-0.5 rounded bg-amber-950/60 border border-amber-500/40 text-amber-300 font-mono-tech text-[10px]"
+                  onClick={() => setSelectedResidue(res)}
+                  className={`px-2 py-0.5 rounded transition-all font-mono-tech text-[10px] ${
+                    selectedResidue === res
+                      ? 'bg-amber-500 text-slate-950 font-bold'
+                      : 'bg-amber-950/60 border border-amber-500/40 text-amber-300 hover:bg-amber-900/80'
+                  }`}
                 >
                   {res}
-                </span>
+                </button>
               ))}
             </div>
           </div>
