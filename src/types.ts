@@ -1,29 +1,29 @@
 export type GemmaProvider = 'webgpu' | 'ollama' | 'groq' | 'openrouter';
 
-export type DisasterCategory = 'Wildfire/Heatwave' | 'Severe Flooding' | 'Cyclone/Typhoon' | 'Earthquake' | 'Drought/Aridity' | 'Medical Crisis';
+export type AnalysisSector = 'Disaster & Climate' | 'Agronomic Health' | 'Air Quality & Pollution' | 'Economic Commodity' | 'Pandemic Bio-Security';
 
-export type SeverityRating = 'CAT-5 CRITICAL' | 'CAT-4 HIGH RISK' | 'CAT-3 MODERATE' | 'CAT-1 SAFE';
-
-export interface MapLocationMarker {
-  id: string;
-  name: string;
-  lat: number;
-  lng: number;
-  category: DisasterCategory;
-  severity: SeverityRating;
-  populationAtRisk: number;
-  humidity: string;
-  temp: string;
-  windSpeed: string;
-  evacuationStatus: 'Mandatory Evacuation' | 'Watch & Act' | 'Normal Operations';
-}
-
-export interface CrisisScanRequest {
+export interface PlanetaryAPIData {
   locationName: string;
   latitude: number;
   longitude: number;
-  category: DisasterCategory;
-  incidentNotes: string;
+  temperature: string;
+  humidity: string;
+  windSpeed: string;
+  pressure: string;
+  dewPoint: string;
+  airQualityIndex: number; // PM2.5
+  co2Ppm: number;
+  thermalAnomalyCount: number;
+  affectedPopulation: number;
+  marketVolatilityIndex: string;
+}
+
+export interface OmniScanRequest {
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  sector: AnalysisSector;
+  queryNotes: string;
   provider: GemmaProvider;
   offGridMode: boolean;
   language: 'en' | 'ta' | 'hi' | 'es';
@@ -31,7 +31,7 @@ export interface CrisisScanRequest {
 
 export type StepStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FLAGGED';
 
-export interface CommandAgentStatus {
+export interface OmniAgentStatus {
   id: string;
   name: string;
   role: string;
@@ -41,26 +41,19 @@ export interface CommandAgentStatus {
   modelUsed?: string;
 }
 
-export interface CrisisScanResult {
+export interface OmniScanResult {
   locationName: string;
   latitude: number;
   longitude: number;
-  category: DisasterCategory;
-  severity: SeverityRating;
-  riskIndexScore: number; // 0 - 100
-  affectedPopulation: number;
-  weatherMetrics: {
-    temp: string;
-    humidity: string;
-    windSpeed: string;
-    pressure: string;
-    airQualityIndex: number;
-  };
-  evacuationRoutePlan: string[];
-  logisticsChecklist: string[];
+  sector: AnalysisSector;
+  riskScore: number; // 0 - 100
+  threatRating: 'CRITICAL SEVERITY' | 'ELEVATED RISK' | 'MODERATE' | 'OPTIMAL';
+  planetaryData: PlanetaryAPIData;
+  predictiveInsights: string[];
+  actionChecklist: string[];
   executiveBrief: string;
-  voiceBroadcastText: string;
-  agentStatuses: CommandAgentStatus[];
+  voiceAdvisoryText: string;
+  agentStatuses: OmniAgentStatus[];
   totalExecutionTimeMs: number;
   gemmaModelUsed: string;
   isOfflineMode: boolean;

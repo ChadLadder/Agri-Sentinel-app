@@ -2,12 +2,11 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { LiveMapExplorer } from './components/LiveMapExplorer';
 import { GlobeVisualizer } from './components/GlobeVisualizer';
-import { CrisisForm } from './components/CrisisForm';
-import { CrisisResult } from './components/CrisisResult';
+import { OmniForm } from './components/OmniForm';
+import { OmniResult } from './components/OmniResult';
 import { AnalyticsDashboard } from './components/AnalyticsDashboard';
-import { GemmaProvider, CrisisScanRequest, CrisisScanResult, CommandAgentStatus } from './types';
-import { processCommandSwarmRequest } from './services/commandSwarmEngine';
-import { GLOBAL_DISASTER_MARKERS } from './data/disasters';
+import { GemmaProvider, OmniScanRequest, OmniScanResult } from './types';
+import { processOmniSwarmRequest } from './services/omniSwarmEngine';
 
 export function App() {
   const [provider, setProvider] = useState<GemmaProvider>('webgpu');
@@ -15,12 +14,12 @@ export function App() {
   const [language, setLanguage] = useState<'en' | 'ta' | 'hi' | 'es'>('en');
   const [activeTab, setActiveTab] = useState<'map' | 'swarm' | 'analytics'>('map');
 
-  const [currentLocationName, setCurrentLocationName] = useState<string>(GLOBAL_DISASTER_MARKERS[0].name);
-  const [currentLat, setCurrentLat] = useState<number>(GLOBAL_DISASTER_MARKERS[0].lat);
-  const [currentLng, setCurrentLng] = useState<number>(GLOBAL_DISASTER_MARKERS[0].lng);
+  const [currentLocationName, setCurrentLocationName] = useState<string>('Coimbatore Delta, Tamil Nadu');
+  const [currentLat, setCurrentLat] = useState<number>(11.0168);
+  const [currentLng, setCurrentLng] = useState<number>(76.9558);
 
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [scanResult, setScanResult] = useState<CrisisScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<OmniScanResult | null>(null);
 
   const handleSelectMapLocation = (name: string, lat: number, lng: number) => {
     setCurrentLocationName(name);
@@ -28,13 +27,13 @@ export function App() {
     setCurrentLng(lng);
   };
 
-  const handleCrisisSubmit = async (request: CrisisScanRequest) => {
+  const handleOmniSubmit = async (request: OmniScanRequest) => {
     setIsLoading(true);
     try {
-      const result = await processCommandSwarmRequest(request);
+      const result = await processOmniSwarmRequest(request);
       setScanResult(result);
     } catch (e) {
-      console.error('[GeoGemma 4] Processing error:', e);
+      console.error('[OmniGemma 4] Swarm Execution Error:', e);
     } finally {
       setIsLoading(false);
     }
@@ -54,18 +53,17 @@ export function App() {
         onTabChange={setActiveTab}
       />
 
-      {/* Main Container */}
+      {/* Main Layout */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
-        {/* Tab 1: Interactive Live Map & Command Configurator */}
+        {/* Tab 1: Interactive Leaflet Map & Multi-API Configurator */}
         {activeTab === 'map' && (
           <div className="space-y-6">
-            {/* Real Leaflet Map Canvas */}
             <LiveMapExplorer onSelectLocation={handleSelectMapLocation} />
 
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               <div className="lg:col-span-6 space-y-6">
-                <CrisisForm
-                  onSubmit={handleCrisisSubmit}
+                <OmniForm
+                  onSubmit={handleOmniSubmit}
                   isLoading={isLoading}
                   currentLocationName={currentLocationName}
                   currentLat={currentLat}
@@ -78,7 +76,7 @@ export function App() {
 
               <div className="lg:col-span-6 space-y-6">
                 {scanResult ? (
-                  <CrisisResult result={scanResult} />
+                  <OmniResult result={scanResult} />
                 ) : (
                   <GlobeVisualizer
                     locationName={currentLocationName}
@@ -91,27 +89,27 @@ export function App() {
           </div>
         )}
 
-        {/* Tab 2: Command Swarm Results */}
+        {/* Tab 2: Gemma Swarm Results */}
         {activeTab === 'swarm' && (
           <div className="space-y-6">
             {scanResult ? (
-              <CrisisResult result={scanResult} />
+              <OmniResult result={scanResult} />
             ) : (
               <div className="glass-panel p-10 text-center space-y-4 border-dashed border-slate-800">
-                <h3 className="text-base font-bold text-slate-200">No Active Command Swarm Result</h3>
-                <p className="text-xs text-slate-400">Select a location on the map and initiate a Command Swarm run.</p>
+                <h3 className="text-base font-bold text-slate-200">No Active Multi-API Swarm Result</h3>
+                <p className="text-xs text-slate-400">Select a location on the map and run a Multi-API Swarm Scan.</p>
               </div>
             )}
           </div>
         )}
 
-        {/* Tab 3: Global Analytics */}
+        {/* Tab 3: Big Data Analytics */}
         {activeTab === 'analytics' && <AnalyticsDashboard />}
       </main>
 
       {/* Footer Bar */}
       <footer className="border-t border-slate-800/80 py-4 px-4 text-center text-xs text-slate-500 bg-slate-950 font-mono-tech">
-        <span>GeoGemma 4 • GDG VIT Chennai "Build with Gemma" Hackathon Submission • Powered by Google DeepMind Gemma 4</span>
+        <span>OmniGemma 4 • GDG VIT Chennai "Build with Gemma" Hackathon Submission • Powered by Google DeepMind Gemma 4</span>
       </footer>
     </div>
   );
