@@ -1,0 +1,68 @@
+import { EmergencyPreset } from '../types';
+
+export const CLINICAL_EMERGENCY_PRESETS: EmergencyPreset[] = [
+  {
+    id: 'severe-hemorrhage',
+    title: 'Arterial Femoral Bleeding (Severe Hemorrhage)',
+    category: 'Hemorrhage/Bleeding',
+    symptoms: 'Spurting bright red blood from deep leg laceration, pale clammy skin, rapid pulse, dizziness.',
+    icdCode: 'ICD-10-CM T14.8',
+    triagePriority: 'RED - IMMEDIATE LIFE THREAT',
+    vitalSigns: {
+      heartRate: '138 bpm (Tachycardia)',
+      bloodPressure: '82/50 mmHg (Hypotension)',
+      oxygenSat: '91% SpO2',
+      respiratoryRate: '28 bpm',
+    },
+    traumaZone: 'Lower Limb',
+    goldenWindowMinutes: 5,
+  },
+  {
+    id: 'cardiac-arrest',
+    title: 'Acute Cardiac Distress & CPR Protocol',
+    category: 'Cardiac Distress',
+    symptoms: 'Sudden chest crushing pain radiating to left jaw & arm, cold sweats, loss of consciousness, agonal breathing.',
+    icdCode: 'ICD-10-CM I46.9',
+    triagePriority: 'RED - IMMEDIATE LIFE THREAT',
+    vitalSigns: {
+      heartRate: '0 bpm (Asystole)',
+      bloodPressure: '0/0 mmHg',
+      oxygenSat: '72% SpO2',
+      respiratoryRate: '0 bpm',
+    },
+    traumaZone: 'Chest',
+    goldenWindowMinutes: 4,
+  },
+  {
+    id: 'viper-bite',
+    title: 'Viper Envenomation (Snake Bite)',
+    category: 'Snake Bite',
+    symptoms: 'Double fang mark puncture on ankle, rapid localized edema, severe burning pain, blackening skin tissue.',
+    icdCode: 'ICD-10-CM T63.0',
+    triagePriority: 'RED - IMMEDIATE LIFE THREAT',
+    vitalSigns: {
+      heartRate: '112 bpm',
+      bloodPressure: '105/70 mmHg',
+      oxygenSat: '95% SpO2',
+      respiratoryRate: '22 bpm',
+    },
+    traumaZone: 'Lower Limb',
+    goldenWindowMinutes: 20,
+  },
+  {
+    id: 'third-degree-burn',
+    title: 'Thermal Flame Burn (Upper Body)',
+    category: 'Burn Injury',
+    symptoms: 'Charred skin on chest and arms, white leathery appearance, blistering, victim in severe shock.',
+    icdCode: 'ICD-10-CM T21.3',
+    triagePriority: 'YELLOW - URGENT CARE',
+    vitalSigns: {
+      heartRate: '118 bpm',
+      bloodPressure: '110/72 mmHg',
+      oxygenSat: '96% SpO2',
+      respiratoryRate: '24 bpm',
+    },
+    traumaZone: 'Chest',
+    goldenWindowMinutes: 30,
+  },
+];
