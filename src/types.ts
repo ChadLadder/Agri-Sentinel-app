@@ -1,39 +1,37 @@
 export type GemmaProvider = 'webgpu' | 'ollama' | 'groq' | 'openrouter';
 
-export type TriagePriority = 'RED - IMMEDIATE LIFE THREAT' | 'YELLOW - URGENT CARE' | 'GREEN - NON-URGENT';
+export type DisasterCategory = 'Wildfire/Heatwave' | 'Severe Flooding' | 'Cyclone/Typhoon' | 'Earthquake' | 'Drought/Aridity' | 'Medical Crisis';
 
-export type EmergencyCategory = 'Hemorrhage/Bleeding' | 'Cardiac Distress' | 'Snake Bite' | 'Burn Injury' | 'Heatstroke' | 'Respiratory Distress';
+export type SeverityRating = 'CAT-5 CRITICAL' | 'CAT-4 HIGH RISK' | 'CAT-3 MODERATE' | 'CAT-1 SAFE';
 
-export interface EmergencyPreset {
+export interface MapLocationMarker {
   id: string;
-  title: string;
-  category: EmergencyCategory;
-  symptoms: string;
-  icdCode: string;
-  triagePriority: TriagePriority;
-  vitalSigns: {
-    heartRate: string;
-    bloodPressure: string;
-    oxygenSat: string;
-    respiratoryRate: string;
-  };
-  traumaZone: 'Head/Neck' | 'Chest' | 'Abdomen' | 'Upper Limb' | 'Lower Limb' | 'Systemic';
-  goldenWindowMinutes: number;
+  name: string;
+  lat: number;
+  lng: number;
+  category: DisasterCategory;
+  severity: SeverityRating;
+  populationAtRisk: number;
+  humidity: string;
+  temp: string;
+  windSpeed: string;
+  evacuationStatus: 'Mandatory Evacuation' | 'Watch & Act' | 'Normal Operations';
 }
 
-export interface TriageRequest {
-  patientSymptoms: string;
-  category: EmergencyCategory;
-  location: string;
-  language: 'en' | 'ta' | 'hi';
+export interface CrisisScanRequest {
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  category: DisasterCategory;
+  incidentNotes: string;
   provider: GemmaProvider;
   offGridMode: boolean;
-  selectedPresetId?: string;
+  language: 'en' | 'ta' | 'hi' | 'es';
 }
 
 export type StepStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FLAGGED';
 
-export interface TriageAgentStatus {
+export interface CommandAgentStatus {
   id: string;
   name: string;
   role: string;
@@ -43,24 +41,26 @@ export interface TriageAgentStatus {
   modelUsed?: string;
 }
 
-export interface TriageResult {
-  emergencyTitle: string;
-  category: EmergencyCategory;
-  triagePriority: TriagePriority;
-  icdCode: string;
-  vitalSigns: {
-    heartRate: string;
-    bloodPressure: string;
-    oxygenSat: string;
-    respiratoryRate: string;
+export interface CrisisScanResult {
+  locationName: string;
+  latitude: number;
+  longitude: number;
+  category: DisasterCategory;
+  severity: SeverityRating;
+  riskIndexScore: number; // 0 - 100
+  affectedPopulation: number;
+  weatherMetrics: {
+    temp: string;
+    humidity: string;
+    windSpeed: string;
+    pressure: string;
+    airQualityIndex: number;
   };
-  goldenWindowMinutes: number;
-  plainEnglishSummary: string;
-  firstAidSteps: string[];
-  doNotDoWarnings: string[];
-  voiceAdvisoryText: string;
-  traumaZone: string;
-  agentStatuses: TriageAgentStatus[];
+  evacuationRoutePlan: string[];
+  logisticsChecklist: string[];
+  executiveBrief: string;
+  voiceBroadcastText: string;
+  agentStatuses: CommandAgentStatus[];
   totalExecutionTimeMs: number;
   gemmaModelUsed: string;
   isOfflineMode: boolean;
