@@ -163,27 +163,33 @@ export function findBestMatchingDisease(cropName: string, symptomsInput: string)
   const cropLower = cropName.toLowerCase();
   const symptomsLower = symptomsInput.toLowerCase();
 
-  // 1. Exact match on crop name
-  const cropMatches = activeDataset.filter((d) => d.crop_name.toLowerCase().includes(cropLower) || cropLower.includes(d.crop_name.toLowerCase()));
+  // Filter dataset by target crop first
+  const cropMatches = activeDataset.filter(
+    (d) =>
+      d.crop_name.toLowerCase().includes(cropLower) ||
+      cropLower.includes(d.crop_name.toLowerCase())
+  );
+  
   const candidates = cropMatches.length > 0 ? cropMatches : activeDataset;
 
-  // 2. Score by symptom keyword overlap
-  let bestDisease = candidates[0];
-  let maxScore = -1;
+  let bestDisease: CropDisease | null = null;
+  let maxScore = 0;
+
+  const keywords = ['spot', 'blight', 'rot', 'wilt', 'rust', 'mildew', 'yellow', 'lesion', 'mold', 'fungal', 'bacterial', 'pustule', 'curl', 'dark', 'droop', 'water'];
 
   for (const d of candidates) {
     let score = 0;
-    const diseaseSymptoms = d.symptoms.toLowerCase().split(' ');
-    const inputWords = symptomsLower.split(' ');
+    const diseaseSymptoms = d.symptoms.toLowerCase();
 
-    for (const w of inputWords) {
-      if (w.length > 3 && diseaseSymptoms.some((ds) => ds.includes(w))) {
-        score += 2;
+    // Check exact keyword matches
+    for (const kw of keywords) {
+      if (symptomsLower.includes(kw) && diseaseSymptoms.includes(kw)) {
+        score += 3;
       }
     }
 
     if (d.crop_name.toLowerCase() === cropLower) {
-      score += 5;
+      score += 2;
     }
 
     if (score > maxScore) {
@@ -192,5 +198,10 @@ export function findBestMatchingDisease(cropName: string, symptomsInput: string)
     }
   }
 
-  return bestDisease || FALLBACK_DISEASES[0];
+  // If input is gibberish or zero matching keywords, fallback to crop default rather than random mismatch
+  if (maxScore < 2 || !bestDisease) {
+    return candidates[0] || activeDataset[0];
+  }
+
+  return bestDisease;
 }
