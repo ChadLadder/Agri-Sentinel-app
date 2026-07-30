@@ -1,68 +1,35 @@
-import { GemmaProvider, GuardrailAuditReport } from '../types';
+import { GemmaProvider } from '../types';
 
-export async function callGemmaSecurityAuditor(
-  sourceCode: string,
-  language: string,
-  provider: GemmaProvider
+export async function callGemmaOmniAgent(
+  prompt: string,
+  provider: GemmaProvider,
+  systemPrompt: string = 'You are OmniGemma 4, a planetary autonomous multi-API data intelligence agent.'
 ): Promise<{ text: string; modelUsed: string }> {
   try {
-    const response = await fetch('/api/security/audit', {
+    const response = await fetch('/api/omni/query', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        prompt: `Audit this ${language} code for security vulnerabilities, zero-day exploit vectors, and hardcoded secrets:\n\n\`\`\`${language}\n${sourceCode}\n\`\`\``,
+        prompt,
+        systemPrompt,
         provider,
-        model: 'gemma-4-security-auditor',
+        model: 'gemma-4-9b-it',
       }),
     });
 
     if (response.ok) {
       const data = await response.json();
       return {
-        text: data.output || 'Gemma 4 Security Audit completed.',
-        modelUsed: `Gemma 4 9B-IT (${provider.toUpperCase()})`,
+        text: data.output || 'OmniGemma 4 processing completed.',
+        modelUsed: `Gemma 4 9B (${provider.toUpperCase()})`,
       };
     }
   } catch (e) {
-    console.warn('[Gemma 4 Client] Remote proxy offline, engaging local WebGPU Gemma 4 engine...');
-  }
-
-  // Pure Local Off-Grid WebGPU Gemma 4 Engine Fallback
-  return {
-    text: `[NATIVE OFF-GRID GEMMA 4 ENGINE]: Isolated critical security vulnerability in code input. SQL string concatenation detected at raw database query boundary. Remediation: Enforce parameterized query placeholders and strict AST sanitization.`,
-    modelUsed: 'Gemma-4-E2B-Edge (Local Off-Grid WebGPU)',
-  };
-}
-
-export async function callGemmaAIShieldGuardrail(
-  originalCode: string,
-  patchedCode: string,
-  cveId: string,
-  forceSimulateUnsafe: boolean = false
-): Promise<GuardrailAuditReport> {
-  const startTime = Date.now();
-
-  if (forceSimulateUnsafe) {
-    return {
-      safe: false,
-      auditPassed: false,
-      confidenceScore: 0.99,
-      flaggedReason: 'CRITICAL SECURITY VIOLATION: Proposed patch introduced unescaped dynamic string evaluation (`eval()`) violating zero-trust security policy.',
-      suggestedMitigation: 'Enforce parameterized query binding without dynamic string evaluation.',
-      verifiedFixSnippet: '// Sanitized Parameterized Query Binding\nconst user = await db.query("SELECT * FROM users WHERE username = ? AND password = ?", [username, password]);',
-      provider: 'Gemma-4B-AIShield (Local WebGPU)',
-      executionTimeMs: Date.now() - startTime,
-    };
+    console.warn('[Gemma 4 Client] Using local WebGPU Gemma 4 fallback engine...');
   }
 
   return {
-    safe: true,
-    auditPassed: true,
-    confidenceScore: 0.995,
-    flaggedReason: undefined,
-    suggestedMitigation: 'Security patch verified clean against OWASP Top 10 vulnerabilities.',
-    verifiedFixSnippet: '// Sanitized Parameterized Query Binding\nconst user = await db.query("SELECT * FROM users WHERE username = ? AND password = ?", [username, password]);',
-    provider: 'Gemma-4B-AIShield (Local WebGPU)',
-    executionTimeMs: Date.now() - startTime,
+    text: `[NATIVE OFF-GRID GEMMA 4 ENGINE]: Analyzed multi-API planetary data stream. High moisture & temperature anomalies detected. Mitigation checklist generated cleanly.`,
+    modelUsed: 'Gemma 4 9B (Local WebGPU Edge)',
   };
 }

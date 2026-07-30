@@ -1,4 +1,4 @@
-import { Language } from '../types';
+export type Language = 'en' | 'ta' | 'hi' | 'es' | 'te';
 
 export function speakAdvisoryText(text: string, language: Language = 'en'): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
@@ -16,12 +16,12 @@ export function speakAdvisoryText(text: string, language: Language = 'en'): void
     en: 'en-IN',
     ta: 'ta-IN',
     hi: 'hi-IN',
+    es: 'es-ES',
     te: 'te-IN',
   };
 
   utterance.lang = langMap[language] || 'en-IN';
 
-  // Find matching voice if available
   const voices = window.speechSynthesis.getVoices();
   const matchedVoice = voices.find((v) => v.lang.includes(langMap[language]));
   if (matchedVoice) {
