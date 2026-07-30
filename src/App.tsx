@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Header } from './components/Header';
 import { SafetyForm } from './components/SafetyForm';
 import { SafetyResult } from './components/SafetyResult';
+import { ThreatRadar } from './components/ThreatRadar';
 import { GemmaProvider, SafetyScanRequest, SafetyScanResult, SafetyAgentStatus } from './types';
 import { processSafetyScanRequest } from './services/multiAgentEngine';
 
@@ -34,16 +35,22 @@ export function App() {
       />
 
       {/* Main Consumer Layout */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
         {/* Simple Consumer Hero Banner */}
         <div className="text-center space-y-2 max-w-2xl mx-auto">
           <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-emerald-200 to-cyan-300 bg-clip-text text-transparent">
-            Protect Yourself & Your Family From Cyber Scams
+            Autonomous Cyber Safety & Fraud Shield
           </h2>
           <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
-            SentryGuard AI runs locally on your device powered by Google DeepMind's Gemma 4. Zero code, zero jargon — just simple, instant protection.
+            SentryGuard AI runs locally on your device powered by Google DeepMind's Gemma 4. Zero code clutter — just instant, intelligent consumer safety.
           </p>
         </div>
+
+        {/* 3D WebGL Cyber Threat Radar */}
+        <ThreatRadar
+          threatLevel={scanResult?.threatLevel || 'Scanning Standby'}
+          riskScore={scanResult ? 100 - scanResult.safetyScore : 20}
+        />
 
         {/* Two-Column Consumer Scanner Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
