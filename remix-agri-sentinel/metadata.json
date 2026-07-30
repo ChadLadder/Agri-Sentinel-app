@@ -1,0 +1,10 @@
+{
+  "name": "Remix Agri-Sentinel",
+  "description": "Local-first, hallucination-resistant agricultural advisory system powered by a multi-agent Gemma swarm (Strategy \u0026 Guardrail Agents), hyper-local Open-Meteo weather analysis, and AlphaFold protein research integration.",
+  "requestFramePermissions": [
+    "geolocation"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

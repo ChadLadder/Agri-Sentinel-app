@@ -1,0 +1,27 @@
+{
+  "entities": {
+    "User": {
+      "path": "users/{userId}",
+      "description": "User profile and settings",
+      "fields": {
+        "createdAt": { "type": "timestamp", "description": "Profile creation date" }
+      }
+    },
+    "AdvisoryHistory": {
+      "path": "users/{userId}/advisoryHistory/{historyId}",
+      "description": "Historical agronomic AI advisory runs for the user",
+      "fields": {
+        "crop": { "type": "string", "description": "Crop name" },
+        "createdAt": { "type": "timestamp", "description": "Timestamp of execution" }
+      }
+    },
+    "CustomDataset": {
+      "path": "users/{userId}/datasets/{datasetId}",
+      "description": "User custom Ground Truth CSV pathogen database",
+      "fields": {
+        "csvContent": { "type": "string", "description": "Raw CSV data string" },
+        "updatedAt": { "type": "timestamp", "description": "Last update timestamp" }
+      }
+    }
+  }
+}
