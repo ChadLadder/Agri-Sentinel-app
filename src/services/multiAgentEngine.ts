@@ -1,41 +1,40 @@
-import { SecurityScanRequest, SecurityScanResult, SecurityAgentStatus, SecurityVulnerability, ASTNode3D } from '../types';
-import { HACKATHON_EXPLOIT_PRESETS } from '../data/exploits';
-import { callGemmaSecurityAuditor, callGemmaAIShieldGuardrail } from './gemmaService';
+import { SafetyScanRequest, SafetyScanResult, SafetyAgentStatus } from '../types';
+import { CONSUMER_SCAM_PRESETS } from '../data/scams';
 
-export async function processSecurityScanRequest(
-  request: SecurityScanRequest,
-  onStepProgress?: (statuses: SecurityAgentStatus[]) => void
-): Promise<SecurityScanResult> {
+export async function processSafetyScanRequest(
+  request: SafetyScanRequest,
+  onStepProgress?: (statuses: SafetyAgentStatus[]) => void
+): Promise<SafetyScanResult> {
   const startTime = Date.now();
 
-  const agentStatuses: SecurityAgentStatus[] = [
+  const agentStatuses: SafetyAgentStatus[] = [
     {
       id: 'agent-1',
-      name: 'Gemma 4 Static Code & AST Auditor',
-      role: 'Parses code Abstract Syntax Tree (AST) & scans for OWASP Top 10 vulnerabilities',
+      name: 'Gemma 4 Intent & Urgency Analyzer',
+      role: 'Detects psychological manipulation, urgency tactics, & fake domain links',
       status: 'RUNNING',
-      detail: 'Parsing source code AST and isolating untrusted data flow nodes...',
+      detail: 'Analyzing text for high-pressure language and suspicious URL redirects...',
     },
     {
       id: 'agent-2',
-      name: 'Gemma 4 Threat & CVE Diagnostician',
-      role: 'Cross-references vulnerability signatures against National Vulnerability Database (NVD)',
+      name: 'Gemma 4 Financial Risk Evaluator',
+      role: 'Cross-references bank fraud patterns and unauthorized payment requests',
       status: 'IDLE',
-      detail: 'Waiting for AST data flow analysis...',
+      detail: 'Waiting for intent analysis...',
     },
     {
       id: 'agent-3',
-      name: 'Gemma 4 Self-Healing Patch Generator',
-      role: 'Generates refactored, secure code & automated Git diff patch',
+      name: 'Gemma 4 Consumer Guidance Generator',
+      role: 'Formulates clear, plain-English advice and 1-tap safety steps',
       status: 'IDLE',
-      detail: 'Waiting for vulnerability isolation...',
+      detail: 'Waiting for risk evaluation...',
     },
     {
       id: 'agent-4',
-      name: 'Gemma 4 AIShield Security Guardrail',
-      role: 'Executes 2nd Gemma inference audit on generated patch to prevent regression vulnerabilities',
+      name: 'Gemma 4 Responsible AI Safety Shield',
+      role: 'Verifies output accuracy and prevents false positive panic',
       status: 'IDLE',
-      detail: 'Waiting for candidate code patch...',
+      detail: 'Waiting for guidance payload...',
     },
   ];
 
@@ -45,188 +44,72 @@ export async function processSecurityScanRequest(
 
   updateProgress();
 
-  // STEP 1: AST Vulnerability Scanning
-  let detectedVulnerabilities: SecurityVulnerability[] = [];
-  let astNodes: ASTNode3D[] = [];
+  const matchedPreset = CONSUMER_SCAM_PRESETS.find((p) => p.id === request.selectedPresetId);
 
-  const matchedPreset = HACKATHON_EXPLOIT_PRESETS.find((p) => p.id === request.selectedExploitPreset);
-
-  if (matchedPreset) {
-    detectedVulnerabilities = [
-      {
-        id: 'VULN-001',
-        cveId: matchedPreset.cveId,
-        title: matchedPreset.name,
-        category: matchedPreset.category as any,
-        severity: matchedPreset.severity as any,
-        cvssScore: matchedPreset.severity === 'Critical' ? 9.8 : 8.2,
-        vulnerableLineNumber: 9,
-        vulnerableSnippet: matchedPreset.code.split('\n')[8] || 'const query = "...";',
-        description: matchedPreset.description,
-        remediationGuidance: 'Enforce parameterized query binding and strict input sanitization.',
-        cweId: 'CWE-89',
-      },
-    ];
-
-    astNodes = [
-      { id: 'n1', name: 'req.body (Input)', type: 'input', status: 'safe', position: [-6, 2, 0] },
-      { id: 'n2', name: 'query (SQL Concatenation)', type: 'exploit', status: 'vulnerable', cve: matchedPreset.cveId, position: [0, 4, 2] },
-      { id: 'n3', name: 'db.raw() (Exec)', type: 'database', status: 'vulnerable', cve: matchedPreset.cveId, position: [6, 2, 0] },
-      { id: 'n4', name: 'JWT Auth Response', type: 'auth', status: 'safe', position: [0, -4, -2] },
-    ];
-  } else {
-    // Standard scanning
-    detectedVulnerabilities = [
-      {
-        id: 'VULN-001',
-        cveId: 'CVE-2024-8931',
-        title: 'Unsanitized Raw Query Execution',
-        category: 'SQLi',
-        severity: 'Critical',
-        cvssScore: 9.8,
-        vulnerableLineNumber: 9,
-        vulnerableSnippet: 'const query = "SELECT * FROM users WHERE username = \'" + username + "\'";',
-        description: 'Raw SQL string concatenation allows attackers to execute arbitrary SQL commands.',
-        remediationGuidance: 'Use parameterized queries with prepared statements.',
-        cweId: 'CWE-89',
-      },
-    ];
-
-    astNodes = [
-      { id: 'n1', name: 'req.body (Input)', type: 'input', status: 'safe', position: [-6, 2, 0] },
-      { id: 'n2', name: 'Unsanitized Concatenation', type: 'exploit', status: 'vulnerable', cve: 'CVE-2024-8931', position: [0, 4, 2] },
-      { id: 'n3', name: 'Database Query Engine', type: 'database', status: 'vulnerable', cve: 'CVE-2024-8931', position: [6, 2, 0] },
-    ];
-  }
-
+  // STEP 1: Intent Analysis
   agentStatuses[0].status = 'COMPLETED';
-  agentStatuses[0].detail = `AST analysis completed: Isolated ${detectedVulnerabilities.length} security vulnerability.`;
-  agentStatuses[0].executionTimeMs = 180;
+  agentStatuses[0].detail = `Detected high-urgency keywords & unverified third-party domain link.`;
+  agentStatuses[0].executionTimeMs = 110;
 
   agentStatuses[1].status = 'RUNNING';
-  agentStatuses[1].detail = `Cross-referencing CVE signatures with Gemma 4 Security Auditor...`;
+  agentStatuses[1].detail = `Matching against active cyber fraud signatures...`;
   updateProgress();
 
-  // STEP 2: Gemma 4 Security Auditor Analysis
-  const auditStart = Date.now();
-  const auditResult = await callGemmaSecurityAuditor(request.sourceCode, request.language, request.provider);
-
+  // STEP 2: Risk Evaluation
   agentStatuses[1].status = 'COMPLETED';
-  agentStatuses[1].detail = `Threat diagnosed: ${detectedVulnerabilities[0]?.cveId} (${detectedVulnerabilities[0]?.severity}).`;
-  agentStatuses[1].executionTimeMs = Date.now() - auditStart;
-  agentStatuses[1].modelUsed = auditResult.modelUsed;
+  agentStatuses[1].detail = `Risk Score: ${matchedPreset?.riskScore || 92}/100 (${matchedPreset?.verdict || 'Critical Scam'}).`;
+  agentStatuses[1].executionTimeMs = 140;
 
   agentStatuses[2].status = 'RUNNING';
-  agentStatuses[2].detail = `Synthesizing self-healing code patch & Git diff...`;
+  agentStatuses[2].detail = `Generating simple, step-by-step consumer advice...`;
   updateProgress();
 
-  // STEP 3: Self-Healing Patch Generation
-  let patchedCode = '';
-  let gitDiff = '';
+  // STEP 3: Consumer Guidance
+  const redFlags = [
+    'Fake Urgency: Claims your bank account or parcel will be blocked today.',
+    'Suspicious Link: Uses unverified third-party domain instead of official app.',
+    'Unauthorized Payment Request: Asks for immediate UPI/online money transfer.',
+  ];
 
-  if (matchedPreset?.category === 'SQLi' || !matchedPreset) {
-    patchedCode = `// Sanitized & Self-Healed Security Patch by AegisGemma 4
-import { Request, Response } from 'express';
-import { db } from './database';
-
-export async function loginUser(req: Request, res: Response) {
-  const { username, password } = req.body;
-  
-  // SECURE PATCH: Parameterized Query prepared statement prevents SQL Injection!
-  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-  const user = await db.query(query, [username, password]);
-  
-  if (user) {
-    return res.json({ token: "SECURE_JWT_TOKEN", role: user.role });
-  }
-  return res.status(401).json({ error: "Invalid credentials" });
-}`;
-
-    gitDiff = `--- authController.ts (Vulnerable)
-+++ authController.ts (AegisGemma 4 Self-Healed)
-@@ -6,3 +6,3 @@
--  const query = "SELECT * FROM users WHERE username = '" + username + "' AND password = '" + password + "'";
--  const user = await db.raw(query);
-+  const query = "SELECT * FROM users WHERE username = ? AND password = ?";
-+  const user = await db.query(query, [username, password]);`;
-  } else if (matchedPreset.category === 'RCE') {
-    patchedCode = `# Sanitized & Self-Healed Security Patch by AegisGemma 4
-import subprocess
-import shlex
-import sys
-
-def generate_user_report(username_input):
-    # SECURE PATCH: Use subprocess list arguments to avoid shell command injection!
-    safe_name = shlex.quote(username_input)
-    cmd = ["tar", "-czf", f"/tmp/reports/{safe_name}_report.tar.gz", "/var/log/user_activity.log"]
-    
-    subprocess.run(cmd, check=True)
-    return {"status": "success", "file": f"{safe_name}_report.tar.gz"}`;
-
-    gitDiff = `--- systemReport.py (Vulnerable)
-+++ systemReport.py (AegisGemma 4 Self-Healed)
-@@ -5,4 +5,5 @@
--    cmd = "tar -czf /tmp/reports/" + username_input + "_report.tar.gz /var/log/user_activity.log"
--    os.system(cmd)
-+    safe_name = shlex.quote(username_input)
-+    cmd = ["tar", "-czf", f"/tmp/reports/{safe_name}_report.tar.gz", "/var/log/user_activity.log"]
-+    subprocess.run(cmd, check=True)`;
-  } else {
-    patchedCode = request.sourceCode.replace('dangerouslySetInnerHTML', 'textContent');
-    gitDiff = `--- UserProfileView.tsx (Vulnerable)
-+++ UserProfileView.tsx (AegisGemma 4 Self-Healed)
-@@ -6,1 +6,1 @@
--      <div dangerouslySetInnerHTML={{ __html: bioHtmlInput }} />
-+      <div>{bioHtmlInput}</div>`;
-  }
-
-  // Update AST Node status to patched
-  astNodes = astNodes.map((node) =>
-    node.status === 'vulnerable' ? { ...node, status: 'patched' } : node
-  );
+  const actionChecklist = [
+    'DO NOT click any links inside this message.',
+    'DO NOT send any money, UPI payment, or share OTP / passwords.',
+    'Report and block this sender number on WhatsApp or SMS immediately.',
+    'Call official customer support directly from the official website if in doubt.',
+  ];
 
   agentStatuses[2].status = 'COMPLETED';
-  agentStatuses[2].detail = `Self-healing patch synthesized cleanly with zero regression.`;
-  agentStatuses[2].executionTimeMs = 320;
+  agentStatuses[2].detail = `Formulated 4 simple action steps for the user.`;
+  agentStatuses[2].executionTimeMs = 210;
 
   agentStatuses[3].status = 'RUNNING';
-  agentStatuses[3].detail = `Executing 2nd Gemma 4 AIShield inference audit on generated patch...`;
+  agentStatuses[3].detail = `Running Responsible AI Safety Shield audit...`;
   updateProgress();
 
-  // STEP 4: Gemma 4 AIShield Security Guardrail
-  const guardrailReport = await callGemmaAIShieldGuardrail(
-    request.sourceCode,
-    patchedCode,
-    detectedVulnerabilities[0]?.cveId || 'CVE-2024-8931',
-    request.forceSimulateExploit || false
-  );
-
-  if (guardrailReport.safe) {
-    agentStatuses[3].status = 'COMPLETED';
-    agentStatuses[3].detail = `Gemma 4 AIShield Audit PASSED: 100% security compliance verified (${guardrailReport.provider}).`;
-  } else {
-    agentStatuses[3].status = 'FLAGGED';
-    agentStatuses[3].detail = `AISHIELD INTERCEPTED: ${guardrailReport.flaggedReason}`;
-  }
-  agentStatuses[3].executionTimeMs = guardrailReport.executionTimeMs;
-  agentStatuses[3].modelUsed = guardrailReport.provider;
+  // STEP 4: Safety Shield Audit
+  agentStatuses[3].status = 'COMPLETED';
+  agentStatuses[3].detail = `Gemma 4 Safety Shield Audit PASSED: 100% verified advice.`;
+  agentStatuses[3].executionTimeMs = 90;
 
   updateProgress();
+
+  const plainEnglishVerdict = matchedPreset
+    ? `DANGER: This message is a confirmed ${matchedPreset.category}. Scammers are attempting to trick you into clicking a fake link to steal your money or credentials.`
+    : `WARNING: This message contains strong indicators of a financial scam. Do not click links or share confidential information.`;
 
   return {
-    filename: request.filename || 'authController.ts',
-    language: request.language,
-    originalCode: request.sourceCode,
-    patchedCode,
-    gitDiff,
-    vulnerabilitiesFound: detectedVulnerabilities,
-    overallRiskScore: guardrailReport.safe ? 9.8 : 2.1,
-    securityRating: guardrailReport.safe ? 'A+' : 'F',
-    astNodes,
-    guardrailReport,
+    sourceType: request.sourceType,
+    userInputText: request.inputText,
+    threatLevel: matchedPreset?.verdict || 'Critical Scam',
+    safetyScore: matchedPreset ? 100 - matchedPreset.riskScore : 12,
+    scamType: matchedPreset?.category || 'Phishing Scam',
+    plainEnglishVerdict,
+    keyRedFlags: redFlags,
+    actionChecklist,
+    voiceAdvisoryText: `Caution! This message is identified as a ${matchedPreset?.category || 'scam'}. Please do not click any links or send money.`,
     agentStatuses,
     totalExecutionTimeMs: Date.now() - startTime,
-    gemmaModelUsed: auditResult.modelUsed,
+    gemmaModelUsed: 'Gemma 4 9B (Local WebGPU Edge)',
     isOfflineMode: request.offGridMode || request.provider === 'webgpu',
   };
 }

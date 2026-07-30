@@ -1,130 +1,82 @@
 import React, { useState } from 'react';
 import { Header } from './components/Header';
-import { SwarmPipeline } from './components/SwarmPipeline';
-import { SecurityForm } from './components/SecurityForm';
-import { SecurityResult } from './components/SecurityResult';
-import { ASTVisualizer } from './components/ASTVisualizer';
-import { GemmaProvider, SecurityScanRequest, SecurityScanResult, SecurityAgentStatus } from './types';
-import { processSecurityScanRequest } from './services/multiAgentEngine';
-import { HACKATHON_EXPLOIT_PRESETS } from './data/exploits';
+import { SafetyForm } from './components/SafetyForm';
+import { SafetyResult } from './components/SafetyResult';
+import { GemmaProvider, SafetyScanRequest, SafetyScanResult, SafetyAgentStatus } from './types';
+import { processSafetyScanRequest } from './services/multiAgentEngine';
 
 export function App() {
   const [provider, setProvider] = useState<GemmaProvider>('webgpu');
   const [offGridMode, setOffGridMode] = useState<boolean>(true);
-  const [activeTab, setActiveTab] = useState<'swarm' | 'playground' | 'ast'>('swarm');
-
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [scanResult, setScanResult] = useState<SecurityScanResult | null>(null);
+  const [scanResult, setScanResult] = useState<SafetyScanResult | null>(null);
 
-  const [agentStatuses, setAgentStatuses] = useState<SecurityAgentStatus[]>([
-    {
-      id: 'agent-1',
-      name: 'Gemma 4 Static Code & AST Auditor',
-      role: 'Parses code Abstract Syntax Tree (AST) & scans for OWASP Top 10 vulnerabilities',
-      status: 'IDLE',
-      detail: 'Ready for source code input or 1-click CVE scenario injection.',
-    },
-    {
-      id: 'agent-2',
-      name: 'Gemma 4 Threat & CVE Diagnostician',
-      role: 'Cross-references vulnerability signatures against National Vulnerability Database (NVD)',
-      status: 'IDLE',
-      detail: 'Waiting for AST analysis output...',
-    },
-    {
-      id: 'agent-3',
-      name: 'Gemma 4 Self-Healing Patch Generator',
-      role: 'Generates refactored, secure code & automated Git diff patch',
-      status: 'IDLE',
-      detail: 'Waiting for vulnerability isolation...',
-    },
-    {
-      id: 'agent-4',
-      name: 'Gemma 4 AIShield Security Guardrail',
-      role: 'Executes 2nd Gemma inference audit on generated patch to prevent regression vulnerabilities',
-      status: 'IDLE',
-      detail: 'Waiting for candidate code patch...',
-    },
-  ]);
-
-  const handleScanSubmit = async (request: SecurityScanRequest) => {
+  const handleScanSubmit = async (request: SafetyScanRequest) => {
     setIsLoading(true);
     try {
-      const result = await processSecurityScanRequest(request, (updatedStatuses) => {
-        setAgentStatuses(updatedStatuses);
-      });
+      const result = await processSafetyScanRequest(request);
       setScanResult(result);
     } catch (e) {
-      console.error('[AegisGemma 4] Swarm Execution Error:', e);
+      console.error('[SentryGuard AI] Processing error:', e);
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#060812] text-slate-100 flex flex-col font-sans selection:bg-cyan-500 selection:text-slate-950">
-      {/* Header Bar */}
+    <div className="min-h-screen bg-[#060812] text-slate-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-slate-950">
+      {/* Clean Header Bar */}
       <Header
         provider={provider}
         onProviderChange={setProvider}
         offGridMode={offGridMode}
         onToggleOffGrid={() => setOffGridMode(!offGridMode)}
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
       />
 
-      {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 lg:px-8 py-6 space-y-6">
-        {/* Live Autonomous Swarm Agent Pipeline Telemetry Bar */}
-        <SwarmPipeline statuses={agentStatuses} />
+      {/* Main Consumer Layout */}
+      <main className="flex-1 max-w-5xl w-full mx-auto px-4 lg:px-8 py-8 space-y-8">
+        {/* Simple Consumer Hero Banner */}
+        <div className="text-center space-y-2 max-w-2xl mx-auto">
+          <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight bg-gradient-to-r from-slate-100 via-emerald-200 to-cyan-300 bg-clip-text text-transparent">
+            Protect Yourself & Your Family From Cyber Scams
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400 leading-relaxed">
+            SentryGuard AI runs locally on your device powered by Google DeepMind's Gemma 4. Zero code, zero jargon — just simple, instant protection.
+          </p>
+        </div>
 
-        {/* Tab 1 & Tab 2: Swarm Audit & Exploit Playground */}
-        {(activeTab === 'swarm' || activeTab === 'playground') && (
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-6 space-y-6">
-              <SecurityForm
-                onSubmit={handleScanSubmit}
-                isLoading={isLoading}
-                currentProvider={provider}
-                offGridMode={offGridMode}
-              />
-            </div>
-
-            <div className="lg:col-span-6 space-y-6">
-              {scanResult ? (
-                <SecurityResult result={scanResult} />
-              ) : (
-                <div className="glass-panel p-8 text-center space-y-4 border-dashed border-slate-800">
-                  <div className="w-12 h-12 rounded-2xl bg-cyan-950/60 border border-cyan-500/30 text-cyan-400 mx-auto flex items-center justify-center">
-                    ⚡
-                  </div>
-                  <h3 className="text-sm font-bold text-slate-200">AegisGemma 4 Security Swarm Ready</h3>
-                  <p className="text-xs text-slate-400 max-w-md mx-auto leading-relaxed">
-                    Select a 1-click CVE exploit scenario or paste source code to trigger Gemma 4 multi-agent AST analysis, automated Git diff patch generation, and AIShield verification.
-                  </p>
-                </div>
-              )}
-            </div>
+        {/* Two-Column Consumer Scanner Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          <div className="lg:col-span-6 space-y-6">
+            <SafetyForm
+              onSubmit={handleScanSubmit}
+              isLoading={isLoading}
+              currentProvider={provider}
+              offGridMode={offGridMode}
+            />
           </div>
-        )}
 
-        {/* Tab 3: 3D AST WebGL Visualizer */}
-        {activeTab === 'ast' && (
-          <ASTVisualizer
-            nodes={
-              scanResult?.astNodes || [
-                { id: 'n1', name: 'req.body (Input)', type: 'input', status: 'safe', position: [-6, 2, 0] },
-                { id: 'n2', name: 'Raw SQL Concatenation', type: 'exploit', status: 'vulnerable', cve: 'CVE-2024-8931', position: [0, 4, 2] },
-                { id: 'n3', name: 'Database Query Engine', type: 'database', status: 'vulnerable', cve: 'CVE-2024-8931', position: [6, 2, 0] },
-              ]
-            }
-          />
-        )}
+          <div className="lg:col-span-6 space-y-6">
+            {scanResult ? (
+              <SafetyResult result={scanResult} />
+            ) : (
+              <div className="glass-panel p-10 text-center space-y-4 border-dashed border-slate-800 flex flex-col items-center justify-center min-h-[380px]">
+                <div className="w-14 h-14 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 text-emerald-400 flex items-center justify-center text-2xl shadow-lg shadow-emerald-500/10">
+                  🛡️
+                </div>
+                <h3 className="text-base font-bold text-slate-200">SentryGuard AI Ready</h3>
+                <p className="text-xs text-slate-400 max-w-sm mx-auto leading-relaxed">
+                  Paste any SMS, email, or message link on the left to receive an instant safety report and clear step-by-step guidance.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
       </main>
 
-      {/* Footer Bar */}
+      {/* Simple Consumer Footer */}
       <footer className="border-t border-slate-800/80 py-4 px-4 text-center text-xs text-slate-500 bg-slate-950 font-mono-tech">
-        <span>AegisGemma 4 • GDG VIT Chennai "Build with Gemma" Hackathon Submission • Powered by Google DeepMind Gemma 4 Open Models</span>
+        <span>SentryGuard AI • GDG VIT Chennai "Build with Gemma" Hackathon Submission • Powered by Google DeepMind Gemma 4</span>
       </footer>
     </div>
   );
