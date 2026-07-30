@@ -2,7 +2,7 @@ import { AdvisoryRequest, AdvisoryResult, SwarmAgentStatus } from '../types';
 import { findBestMatchingDisease, fetchDiseasesDataset } from '../data/diseases';
 import { callGemmaStrategyAgent, callGemmaGuardrailShield } from './gemmaService';
 import { getAlphaFoldProteinDetails } from './alphafoldService';
-import { getAgronomicWeatherContext } from './weatherService';
+import { fetchRealAgronomicWeather } from './weatherService';
 
 export async function processSwarmAdvisoryRequest(
   request: AdvisoryRequest,
@@ -59,8 +59,8 @@ export async function processSwarmAdvisoryRequest(
   agentStatuses[1].detail = `Invoking Gemma open-weight model via ${request.provider.toUpperCase()}...`;
   updateProgress();
 
-  // STEP 2: Gemma Strategy Agent Execution
-  const weatherContext = getAgronomicWeatherContext(request.location);
+  // STEP 2: Real Open-Meteo Weather API & Gemma Strategy Agent Execution
+  const weatherContext = await fetchRealAgronomicWeather(request.location);
 
   const strategyPrompt = `
 Crop: ${matchedDisease.crop_name}

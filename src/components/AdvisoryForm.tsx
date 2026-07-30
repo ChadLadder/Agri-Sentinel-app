@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { AdvisoryRequest } from '../types';
-import { Sprout, Mic, MapPin, AlertOctagon, Sparkles, Check, ChevronDown, Image as ImageIcon, Zap, Compass, ShieldCheck } from 'lucide-react';
+import { searchGeocodingLocations, fetchRealAgronomicWeather, GeocodingResult } from '../services/weatherService';
+import { Sprout, Mic, MapPin, AlertOctagon, Sparkles, Check, ChevronDown, Image as ImageIcon, Zap, Navigation, Loader2, Globe } from 'lucide-react';
 
 interface AdvisoryFormProps {
   onSubmit: (request: AdvisoryRequest) => void;
@@ -10,28 +11,6 @@ interface AdvisoryFormProps {
   currentLanguage: AdvisoryRequest['language'];
 }
 
-interface LocationOption {
-  city: string;
-  state: string;
-  zone: string;
-  humidity: string;
-  temp: string;
-  icon: string;
-}
-
-const INDIAN_AGRI_LOCATIONS: LocationOption[] = [
-  { city: 'Coimbatore', state: 'Tamil Nadu', zone: 'Tropical Humid Spore Belt', humidity: '82%', temp: '31°C', icon: '🌴' },
-  { city: 'Nashik', state: 'Maharashtra', zone: 'Semi-Arid Grape & Onion Belt', humidity: '65%', temp: '29°C', icon: '🍇' },
-  { city: 'Ludhiana', state: 'Punjab', zone: 'Indo-Gangetic Wheat Rust Zone', humidity: '74%', temp: '28°C', icon: '🌾' },
-  { city: 'Guntur', state: 'Andhra Pradesh', zone: 'Coastal Chilli Rot Region', humidity: '79%', temp: '33°C', icon: '🌶️' },
-  { city: 'Wayanad', state: 'Kerala', zone: 'High Altitude Tea & Coffee Moisture', humidity: '88%', temp: '24°C', icon: '⛰️' },
-  { city: 'Shimla', state: 'Himachal Pradesh', zone: 'Temperate Apple Scab Zone', humidity: '70%', temp: '21°C', icon: '🍎' },
-  { city: 'Indore', state: 'Madhya Pradesh', zone: 'Malwa Plateau Soybean Belt', humidity: '62%', temp: '30°C', icon: '🌱' },
-  { city: 'Karnal', state: 'Haryana', zone: 'Basmati Rice Blast Zone', humidity: '76%', temp: '29°C', icon: '🌾' },
-  { city: 'Jaipur', state: 'Rajasthan', zone: 'Arid Mustard Mildew Belt', humidity: '48%', temp: '35°C', icon: '☀️' },
-  { city: 'Pune', state: 'Maharashtra', zone: 'Western Ghats Vegetable Belt', humidity: '72%', temp: '27°C', icon: '🥦' },
-];
-
 export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
   onSubmit,
   isLoading,
@@ -40,13 +19,27 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
   currentLanguage,
 }) => {
   const [cropName, setCropName] = useState<string>('Tomato');
-  const [symptoms, setSymptoms] = useState<string>('Dark concentric spots on lower leaves with yellow halos and premature leaf drop');
-  const [locationInput, setLocationInput] = useState<string>('Coimbatore, Tamil Nadu');
+  const [symptoms, setSymptoms] = useState<string>('Dark concentric target spots on lower leaves with bright yellow halos');
+  const [locationInput, setLocationInput] = useState<string>('Coimbatore, Tamil Nadu, India');
+  
+  // Real Geocoding API State
+  const [searchResults, setSearchResults] = useState<GeocodingResult[]>([]);
+  const [isSearchingGeocode, setIsSearchingGeocode] = useState<boolean>(false);
   const [showLocationDropdown, setShowLocationDropdown] = useState<boolean>(false);
+  const [isLocatingGPS, setIsLocatingGPS] = useState<boolean>(false);
+
   const [forceSimulateUnsafe, setForceSimulateUnsafe] = useState<boolean>(false);
   const [isRecording, setIsRecording] = useState<boolean>(false);
   const [selectedPhotoPreset, setSelectedPhotoPreset] = useState<string>('Tomato Early Blight');
   const locationRef = useRef<HTMLDivElement>(null);
+
+  const sampleLocations = [
+    { name: 'Coimbatore, Tamil Nadu', lat: 11.0168, lon: 76.9558 },
+    { name: 'Nashik, Maharashtra', lat: 19.9975, lon: 73.7898 },
+    { name: 'Ludhiana, Punjab', lat: 30.9010, lon: 75.8573 },
+    { name: 'Guntur, Andhra Pradesh', lat: 16.3067, lon: 80.4365 },
+    { name: 'Shimla, Himachal Pradesh', lat: 31.1048, lon: 77.1734 },
+  ];
 
   const visualDiseasePresets = [
     {
@@ -87,11 +80,22 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
     },
   ];
 
-  const filteredLocations = INDIAN_AGRI_LOCATIONS.filter(
-    (loc) =>
-      `${loc.city} ${loc.state} ${loc.zone}`.toLowerCase().includes(locationInput.toLowerCase()) ||
-      locationInput.length === 0
-  );
+  // Debounced Real Geocoding Search API call on typing
+  useEffect(() => {
+    if (!locationInput || locationInput.trim().length < 2) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setIsSearchingGeocode(true);
+      const results = await searchGeocodingLocations(locationInput);
+      setSearchResults(results);
+      setIsSearchingGeocode(false);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [locationInput]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -103,9 +107,33 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleSelectLocation = (loc: LocationOption) => {
-    setLocationInput(`${loc.city}, ${loc.state}`);
+  const handleSelectLocation = (loc: GeocodingResult | { name: string; lat: number; lon: number }) => {
+    const text = 'displayText' in loc ? loc.displayText : loc.name;
+    setLocationInput(text);
     setShowLocationDropdown(false);
+  };
+
+  const handleDetectGPS = () => {
+    if (!navigator.geolocation) {
+      alert('Geolocation is not supported by your browser.');
+      return;
+    }
+
+    setIsLocatingGPS(true);
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const lat = pos.coords.latitude;
+        const lon = pos.coords.longitude;
+        setLocationInput(`GPS Location (${lat.toFixed(4)}°N, ${lon.toFixed(4)}°E)`);
+        setIsLocatingGPS(false);
+      },
+      (err) => {
+        console.warn('[GPS Error]', err);
+        setIsLocatingGPS(false);
+        alert('Could not retrieve GPS location. Please select from the dropdown.');
+      },
+      { timeout: 8000 }
+    );
   };
 
   const handleVoiceInput = () => {
@@ -148,7 +176,7 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
 
   return (
     <form onSubmit={handleSubmit} className="glass-panel p-6 border-emerald-500/30 shadow-2xl relative overflow-hidden space-y-6">
-      {/* Background Neon Accent Glow */}
+      {/* Neon Glow Accents */}
       <div className="absolute -right-24 -top-24 w-72 h-72 bg-emerald-500/15 rounded-full blur-3xl pointer-events-none"></div>
       <div className="absolute -left-24 -bottom-24 w-72 h-72 bg-cyan-500/15 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -160,9 +188,12 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
           <div>
             <h2 className="text-base font-bold text-slate-100 flex items-center space-x-2">
               <span>Farmer Agronomic Diagnosis Suite</span>
-              <span className="px-2.5 py-0.5 text-[10px] font-mono-tech badge-emerald">Google Maps Smart Suggest</span>
+              <span className="px-2.5 py-0.5 text-[10px] font-mono-tech badge-cyan flex items-center space-x-1">
+                <Globe className="w-3 h-3 text-cyan-400" />
+                <span>Live Geocoding API Active</span>
+              </span>
             </h2>
-            <p className="text-xs text-slate-400">Specify farm symptoms & select microclimate region for Gemma Swarm execution</p>
+            <p className="text-xs text-slate-400">Type any city worldwide or use GPS for real live microclimate weather matching</p>
           </div>
         </div>
         <span className="text-xs font-mono-tech px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
@@ -170,7 +201,7 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
         </span>
       </div>
 
-      {/* Main Grid: Crop Select & Google Maps Style Location Autocomplete */}
+      {/* Main Grid: Crop Select & Live Google Maps / Open-Meteo Geocoding Autocomplete */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
         {/* Crop Selection */}
         <div>
@@ -194,18 +225,29 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
           </select>
         </div>
 
-        {/* Google Maps Interactive Autocomplete Location Dropdown */}
+        {/* Real Geocoding Autocomplete Location Input */}
         <div ref={locationRef} className="relative">
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5 flex items-center justify-between">
-            <span className="flex items-center">
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-semibold text-slate-300 flex items-center">
               <MapPin className="w-3.5 h-3.5 text-cyan-400 mr-1.5" />
               <span>Farm Region / Microclimate Location</span>
-            </span>
-            <span className="text-[10px] text-cyan-400 font-mono-tech flex items-center space-x-1">
-              <Compass className="w-3 h-3 text-cyan-400 animate-spin" />
-              <span>Maps Autocomplete</span>
-            </span>
-          </label>
+            </label>
+
+            {/* GPS Live Geolocation Button */}
+            <button
+              type="button"
+              onClick={handleDetectGPS}
+              disabled={isLocatingGPS}
+              className="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-cyan-950/80 hover:bg-cyan-900 border border-cyan-500/40 text-cyan-300 transition-all flex items-center space-x-1"
+            >
+              {isLocatingGPS ? (
+                <Loader2 className="w-3 h-3 animate-spin text-cyan-400" />
+              ) : (
+                <Navigation className="w-3 h-3 text-cyan-400" />
+              )}
+              <span>{isLocatingGPS ? 'Locating GPS...' : '📍 GPS Live'}</span>
+            </button>
+          </div>
 
           <div className="relative">
             <input
@@ -216,73 +258,82 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
                 setShowLocationDropdown(true);
               }}
               onFocus={() => setShowLocationDropdown(true)}
-              placeholder="Type city or state (e.g. Coimbatore, Nashik, Punjab)..."
+              placeholder="Type any city worldwide (e.g. Coimbatore, Nashik, Salem, London)..."
               className="w-full bg-slate-900 border border-slate-800 rounded-xl px-3.5 py-3 pr-10 text-sm text-slate-200 focus:outline-none focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500/50 transition-all font-mono-tech text-xs"
             />
-            <div
-              onClick={() => setShowLocationDropdown(!showLocationDropdown)}
-              className="absolute right-3 top-3 cursor-pointer p-0.5 rounded hover:bg-slate-800 text-slate-400"
-            >
-              <ChevronDown className="w-4 h-4" />
+            <div className="absolute right-3 top-3 flex items-center space-x-1">
+              {isSearchingGeocode ? (
+                <Loader2 className="w-4 h-4 text-cyan-400 animate-spin" />
+              ) : (
+                <ChevronDown
+                  onClick={() => setShowLocationDropdown(!showLocationDropdown)}
+                  className="w-4 h-4 text-slate-400 cursor-pointer hover:text-slate-200"
+                />
+              )}
             </div>
           </div>
 
-          {/* 1-Click Quick Location Chips */}
+          {/* 1-Click Preset Location Chips */}
           <div className="flex flex-wrap gap-1.5 mt-2">
-            {INDIAN_AGRI_LOCATIONS.slice(0, 5).map((loc) => (
+            {sampleLocations.map((loc) => (
               <button
-                key={loc.city}
+                key={loc.name}
                 type="button"
                 onClick={() => handleSelectLocation(loc)}
                 className={`text-[10px] font-mono-tech px-2 py-0.5 rounded-lg border transition-all flex items-center space-x-1 ${
-                  locationInput.includes(loc.city)
+                  locationInput.includes(loc.name.split(',')[0])
                     ? 'bg-cyan-950 border-cyan-500 text-cyan-300 font-bold'
                     : 'bg-slate-900/80 border-slate-800 text-slate-400 hover:text-slate-200 hover:border-slate-700'
                 }`}
               >
-                <span>{loc.icon}</span>
-                <span>{loc.city}</span>
+                <span>📍</span>
+                <span>{loc.name}</span>
               </button>
             ))}
           </div>
 
-          {/* Floating Maps-Style Autocomplete Dropdown List */}
+          {/* Real Live Worldwide Places Autocomplete Dropdown Popup */}
           {showLocationDropdown && (
-            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-950/95 border border-cyan-500/40 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-slate-800/80 backdrop-blur-xl animate-fadeIn">
+            <div className="absolute left-0 right-0 top-full mt-1.5 z-50 bg-slate-950/95 border border-cyan-500/50 rounded-xl shadow-2xl overflow-hidden max-h-64 overflow-y-auto divide-y divide-slate-800/80 backdrop-blur-2xl animate-fadeIn">
               <div className="px-3 py-1.5 bg-slate-900 text-[10px] font-mono-tech text-slate-400 flex items-center justify-between border-b border-slate-800">
-                <span>SUGGESTED AGRICULTURAL MICROCLIMATE ZONES</span>
-                <span>{filteredLocations.length} Matching Regions</span>
+                <span className="flex items-center space-x-1 text-cyan-400 font-bold">
+                  <Globe className="w-3 h-3" />
+                  <span>REAL-TIME WORLDWIDE GEOLOCATION MATCHES</span>
+                </span>
+                <span>{searchResults.length} Results Found</span>
               </div>
-              {filteredLocations.length > 0 ? (
-                filteredLocations.map((loc) => (
+
+              {searchResults.length > 0 ? (
+                searchResults.map((loc) => (
                   <div
-                    key={`${loc.city}-${loc.state}`}
+                    key={`${loc.latitude}-${loc.longitude}-${loc.displayText}`}
                     onClick={() => handleSelectLocation(loc)}
-                    className="p-3 hover:bg-slate-900 cursor-pointer transition-all flex items-center justify-between group"
+                    className="p-3 hover:bg-slate-900/90 cursor-pointer transition-all flex items-center justify-between group"
                   >
                     <div className="flex items-center space-x-2.5">
-                      <div className="w-8 h-8 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-center text-sm">
-                        {loc.icon}
+                      <div className="w-7 h-7 rounded-lg bg-cyan-950/80 border border-cyan-500/40 flex items-center justify-center text-cyan-400">
+                        <MapPin className="w-3.5 h-3.5" />
                       </div>
                       <div>
-                        <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300 flex items-center space-x-1.5">
-                          <span>{loc.city}, {loc.state}</span>
+                        <div className="text-xs font-bold text-slate-200 group-hover:text-cyan-300">
+                          {loc.name}
                         </div>
-                        <span className="text-[10px] text-slate-400 block mt-0.5">{loc.zone}</span>
+                        <span className="text-[10px] text-slate-400 block">
+                          {loc.admin1 ? `${loc.admin1}, ` : ''}{loc.country}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="text-right">
-                      <span className="text-[10px] font-mono-tech px-2 py-0.5 rounded bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 block">
-                        RH: {loc.humidity}
-                      </span>
-                      <span className="text-[10px] text-slate-500 font-mono-tech mt-0.5 block">{loc.temp}</span>
-                    </div>
+                    <span className="text-[9px] font-mono-tech px-2 py-0.5 rounded bg-slate-900 border border-slate-800 text-slate-400">
+                      {loc.latitude.toFixed(2)}°N, {loc.longitude.toFixed(2)}°E
+                    </span>
                   </div>
                 ))
               ) : (
                 <div className="p-4 text-xs text-slate-400 text-center">
-                  Use "{locationInput}" as custom location
+                  {isSearchingGeocode
+                    ? 'Searching worldwide places database...'
+                    : `Press enter to use "${locationInput}"`}
                 </div>
               )}
             </div>
@@ -290,7 +341,7 @@ export const AdvisoryForm: React.FC<AdvisoryFormProps> = ({
         </div>
       </div>
 
-      {/* Visual Crop Disease Pathology Cards (1-Click Auto-Fill) */}
+      {/* Visual Crop Disease Pathology Cards */}
       <div>
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-bold text-slate-200 flex items-center space-x-1.5">
