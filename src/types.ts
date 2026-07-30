@@ -1,36 +1,36 @@
 export type GemmaProvider = 'ollama' | 'groq' | 'openrouter' | 'webgpu';
 
-export type Language = 'en' | 'ta' | 'hi' | 'te';
+export type VulnerabilityCategory = 'SQLi' | 'XSS' | 'RCE' | 'BrokenAuth' | 'PathTraversal' | 'HardcodedSecrets';
 
-export interface CropDisease {
-  disease_id: string;
-  crop_name: string;
-  disease_name: string;
-  symptoms: string;
-  pathogen_type: 'Fungal' | 'Bacterial' | 'Oomycete' | 'Viral';
-  alphafold_pdb_id: string;
-  target_protein: string;
-  approved_chemical: string;
-  verified_treatment: string;
-  organic_remedy: string;
-  recommended_dosage: string;
-  risk_level: 'Low' | 'Medium' | 'High' | 'Critical';
+export type SeverityLevel = 'Critical' | 'High' | 'Medium' | 'Low' | 'Safe';
+
+export interface SecurityVulnerability {
+  id: string;
+  cveId: string;
+  title: string;
+  category: VulnerabilityCategory;
+  severity: SeverityLevel;
+  cvssScore: number;
+  vulnerableLineNumber: number;
+  vulnerableSnippet: string;
+  description: string;
+  remediationGuidance: string;
+  cweId: string;
 }
 
-export interface AdvisoryRequest {
-  cropName: string;
-  symptoms: string;
-  location?: string;
-  imageUrl?: string;
-  language: Language;
+export interface SecurityScanRequest {
+  sourceCode: string;
+  filename: string;
+  language: 'typescript' | 'javascript' | 'python' | 'go' | 'rust';
   provider: GemmaProvider;
   offGridMode: boolean;
-  forceSimulateUnsafe?: boolean;
+  forceSimulateExploit?: boolean;
+  selectedExploitPreset?: string;
 }
 
 export type StepStatus = 'IDLE' | 'RUNNING' | 'COMPLETED' | 'FLAGGED' | 'FAILED';
 
-export interface SwarmAgentStatus {
+export interface SecurityAgentStatus {
   id: string;
   name: string;
   role: string;
@@ -46,44 +46,33 @@ export interface GuardrailAuditReport {
   confidenceScore: number;
   flaggedReason?: string;
   suggestedMitigation?: string;
-  verifiedChemical?: string;
+  verifiedFixSnippet?: string;
   provider: string;
   executionTimeMs: number;
 }
 
-export interface AlphaFoldProtein {
-  pdbId: string;
-  proteinName: string;
-  uniprotId: string;
-  organism: string;
-  bindingSiteResidues: string[];
-  mechanismExplanation: string;
-  molecularWeight: string;
+export interface ASTNode3D {
+  id: string;
+  name: string;
+  type: 'function' | 'variable' | 'input' | 'database' | 'auth' | 'exploit';
+  status: 'safe' | 'vulnerable' | 'patched';
+  cve?: string;
+  position: [number, number, number];
 }
 
-export interface AdvisoryResult {
-  disease: CropDisease;
-  strategyText: string;
-  verifiedTreatment: string;
-  organicOption: string;
-  dosage: string;
-  weatherContext: {
-    temperature: string;
-    humidity: string;
-    condition: string;
-    riskAlert: string;
-  };
-  proteinTarget: AlphaFoldProtein;
+export interface SecurityScanResult {
+  filename: string;
+  language: string;
+  originalCode: string;
+  patchedCode: string;
+  gitDiff: string;
+  vulnerabilitiesFound: SecurityVulnerability[];
+  overallRiskScore: number;
+  securityRating: 'A+' | 'A' | 'B' | 'C' | 'D' | 'F';
+  astNodes: ASTNode3D[];
   guardrailReport: GuardrailAuditReport;
-  agentStatuses: SwarmAgentStatus[];
+  agentStatuses: SecurityAgentStatus[];
   totalExecutionTimeMs: number;
   gemmaModelUsed: string;
   isOfflineMode: boolean;
-}
-
-export interface LocalGemmaStatus {
-  ollamaConnected: boolean;
-  availableModels: string[];
-  recommendedModel: string;
-  webGpuSupported: boolean;
 }
